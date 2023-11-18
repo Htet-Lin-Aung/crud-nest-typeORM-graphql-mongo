@@ -4,7 +4,6 @@ import { User } from './user.entity';
 import { MongoRepository } from 'typeorm';
 import { UserInput } from './user.input';
 import { ObjectId } from 'mongodb'; // Use ObjectID from mongodb
-import * as bcrypt from 'bcrypt';
 @Injectable()
 export class UserService {
     constructor(
@@ -17,16 +16,14 @@ export class UserService {
     }
 
     async createUser(input: UserInput): Promise<User> {
-        const salt = await bcrypt.genSalt();
         const user = new User();
         user._id = new ObjectId();
         user.username = input.username;
-        user.password = await bcrypt.hash(input.password, salt);
+        user.password = input.password;
         return this.userRepository.save(user);
     }
 
     async updateUser(id: string, input: UserInput): Promise<User> {
-        const salt = await bcrypt.genSalt();
         const user = await this.userRepository.findOneBy({ _id: new ObjectId(id) });
     
         if (!user) {
@@ -34,12 +31,12 @@ export class UserService {
         }
     
         user.username = input.username;
-        user.password = await bcrypt.hash(input.password, salt);
+        user.password = input.password;
     
         return this.userRepository.save(user);
     }
     
-    async delete(id: string): Promise<void> {
+    async delete(id: string): Promise<boolean> {
         const user = await this.userRepository.findOneBy({_id: new ObjectId(id)});
     
         if (!user) {
@@ -47,5 +44,7 @@ export class UserService {
         }
     
         await this.userRepository.remove(user);
-      }
+        
+        return true;
+    }
 }
